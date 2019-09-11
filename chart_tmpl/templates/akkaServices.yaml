@@ -1,0 +1,22 @@
+{{- range $port := .Values.resources.ports }}
+  {{- /* ======== Check if it's AKKA port ======== */}}
+  {{- if contains "akka" $port.name }}
+# Akka
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Values.service.name }}
+  labels:
+    portName: {{$port.name}}
+    {{- include "defatulLabels" $.Values | indent 4 }}
+spec:
+  ports:
+  - name: akka
+    port: {{ $port.port}}
+    protocol: TCP
+    targetPort: {{ $port.port}}
+  selector:
+    app: {{ $.Values.service.name }}
+  clusterIP: None
+{{- end }}
+{{- end }}

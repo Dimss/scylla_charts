@@ -1,0 +1,47 @@
+{{- range $port := .Values.resources.ports }}
+  {{- /* ======== Check if it's AKKA port ======== */}}
+
+  {{- if eq $port.type "http" }}
+    {{- if $port.internal }}
+      {{- if ne $port.internal true }}
+---
+# HTTP
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Values.service.name }}-{{$port.name}}
+  labels:
+    portName: {{$port.name}}
+    {{- include "defatulLabels" $.Values | indent 4 }}
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: {{$port.port}}
+    protocol: TCP
+    targetPort: {{$port.port}}
+  selector:
+    app: {{ $.Values.service.name }}
+      {{- end }}
+    {{- else }}
+---
+# HTTP
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Values.service.name }}-{{$port.name}}
+  labels:
+    portName: {{$port.name}}
+    {{- include "defatulLabels" $.Values | indent 4 }}
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: {{$port.port}}
+    protocol: TCP
+    targetPort: {{$port.port}}
+  selector:
+    app: {{ $.Values.service.name }}
+    {{- end }}
+  {{- end }}
+{{- end }}

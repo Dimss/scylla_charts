@@ -1,0 +1,21 @@
+image:
+  repository: scylladb/scylla
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  nodePort: 30042
+  port: 9042
+
+pv:
+  createPV: true
+  mountPath: "/mnt/data"
+  name: db-pv-volume
+  storageClassName: db-storage
+  size: 10Gi
+
+pvc:
+  name: scylla-db
+  storageClassName: db-storage
+

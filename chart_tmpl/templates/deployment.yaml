@@ -1,0 +1,49 @@
+apiVersion: apps/v1beta1
+kind: {{ .Values.service.deployment.type }}
+metadata:
+    name: {{ .Values.service.name }}
+    labels:
+      {{- include "defatulLabels" .Values | indent 6 }}
+spec:
+  {{- /* ======== Check if it's a StatefulSet, if yes, add serviceName ======== */}}
+  {{- if eq .Values.service.deployment.type "StatefulSet" }}
+  serviceName: {{ .Values.service.name }}
+  {{- end }}
+  {{- /* ====== check if the Kind is a deployment, if yes, add strategy type recreate ====== */}}
+  {{- if eq .Values.service.deployment.type "Deployment"}}
+  strategy:
+    type: "Recreate"
+  {{- end}}
+  replicas: {{ .Values.service.deployment.minNodes }}
+  selector:
+    matchLabels:
+      app: {{ .Values.service.name }}
+  template:
+    metadata:
+      annotations:
+{{- if .Values.pod.annotations }}
+{{ toYaml .Values.pod.annotations | indent 8 }}
+{{- end }}
+        {{- include "prometheus" . | indent 8}}
+      labels:
+        {{- include "defatulLabels" .Values | indent 8 }}
+    spec:
+      containers:
+      - name: {{ .Values.service.name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{- include "resources" . | indent 8}}
+        ports:
+        {{- range $port := .Values.resources.ports }}
+        - containerPort: {{ $port.port }}
+        {{- end }}
+        {{- include "envVariables" . | indent 8}}
+        {{- include "lifecyclePortCheck" . | indent 8}}
+        volumeMounts:
+        - mountPath: "/traiana/app/config/conf"
+          name: {{ .Values.service.name }}-file
+          subPath: "conf"
+      volumes:
+        - name: {{ .Values.service.name }}-file
+          secret:
+            secretName: {{ .Values.service.name }}-file

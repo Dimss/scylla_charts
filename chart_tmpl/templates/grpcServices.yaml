@@ -1,0 +1,56 @@
+{{- range $port := .Values.resources.ports }}
+  {{- if eq $port.type "grpc" }}
+    {{- if $port.internal }}
+      {{- if ne $port.internal true }}
+        {{- range $key, $endpoints := $.Values.service.apis }}
+          {{- range $endpoint := $endpoints.endpoints}}
+            {{- $endpointList := $endpoint | splitList "." }}
+            {{- $len := len $endpointList }}
+# GRPC
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ sub $len 1 | index $endpointList | lower }}
+  labels:
+    version: {{ $endpoints.version }}
+    portName: {{ sub $len 1 | index $endpointList | lower }}
+    {{- include "defatulLabels" $.Values | indent 4 }}
+spec:
+  type: NodePort
+  ports:
+  - name: grpc
+    port: {{ $port.port }}
+    protocol: TCP
+  selector:
+    app: {{ $.Values.service.name }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- else }}
+      {{- range $key, $endpoints := $.Values.service.apis }}
+        {{- range $endpoint := $endpoints.endpoints}}
+          {{- $endpointList := $endpoint | splitList "." }}
+          {{- $len := len $endpointList }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ sub $len 1 | index $endpointList | lower }}
+  labels:
+    version: {{ $endpoints.version }}
+    portName: {{ sub $len 1 | index $endpointList | lower }}
+    {{- include "defatulLabels" $.Values | indent 4 }}
+spec:
+  type: NodePort
+  ports:
+  - name: grpc
+    port: {{ $port.port }}
+    protocol: TCP
+  selector:
+    app: {{ $.Values.service.name }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
